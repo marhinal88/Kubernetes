@@ -1,0 +1,99 @@
+//Preparing linux !!!DONT USE IT ON PUBLIC SERVERS!!!
+sudo swapoff -a
+sudo vim /etc/fstab
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+//Set SELinux to disabled:
+sudo vim /etc/sysconfig/selinux
+
+
+
+//Set hostnames and /etc/hosts
+sudo vim /etc/hosts
+
+//Example from master node:
+127.0.0.1   master.zamunda.local        master
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+172.27.64.210 kuber-node1.zamunda.local kuber-node1
+172.27.64.212 kuber-node2.zamunda.local kuber-node2
+172.27.64.213 kuber-node3.zamunda.local kuber-node3
+172.27.64.215 master.zamunda.local      master
+
+//Set /etc/resolv/conf
+sudo vim /etc/resolv/conf
+
+//Use your local domain name and local DNS
+search zamunda.local
+nameserver 172.27.64.20
+nameserver 172.27.64.21
+
+//Load kernel modules
+sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+// Set kernel parameters
+sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF 
+
+//Reload above changes
+sudo sysctl --system
+
+
+//Add docker repos & install containerd
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install -y containerd.io
+
+//Containerd config
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i 's/            SystemdCgroup = false/            SystemdCgroup = true/' /etc/containerd/config.toml
+
+sudo systemctl restart containerd
+
+//Add kubernetes repos
+sudo cat > tee /etc/yum.repos.d/kubernetes.repo << EOF
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+
+//Install kubernetes components
+
+sudo yum update
+sudo yum -y install -y kubelet kubeadm kubectl
+
+//Initialize Kubernetes cluster with Kubeadm command
+//Use your full FQDN name of master node
+sudo kubeadm init --control-plane-endpoint=master.zamunda.local
+
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl cluster-info
+kubectl get nodes
+
+//As we can see nodes status is ‘NotReady’, so to make it active. We must install CNI (Container Network Interface) or network add-on plugins like Calico, Flannel and Weave-net.
+//We use Calico, last version on today is 3.27.0
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+//Check if all pods go to Ready 1/1 status
+kubectl get pods -n kube-system
+kubectl get nodes
