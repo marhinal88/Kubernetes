@@ -97,9 +97,47 @@ sudo yum update
 sudo yum -y install -y kubelet kubeadm kubectl
 ````
 
+### Эти действия выполняются на мастере:
 Инициализируем мастер, указываем полный хостнейм с доменом:
 ```bash
 sudo kubeadm init --control-plane-endpoint=master.zamunda.local
 ````
+
+После успешной инициализации мастера создаем файл настроек:
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+````
+### Эти действия выполняем на трех нодах по очереди:
+
+Выполняем подключение ноды к мастеру. Используем команду и токен, полученные ранее в выводе информации после инициализации мастера:
+
+```bash
+sudo kubeadm join <master_ip_address>:6443 --token
+````
+
+### Далее выполняем все на мастере:
+Проверяем, все ли ноды подключились, на данном этапе у всех будет статус NotReady, это нормально, т.к. не настроен CNI:
+```bash
+kubectl get nodes
+````
+Устанавливаем CNI, мы используем Calico, на данный момент актуальная версия 3.27, перед установкой лучше свериться с репозиторием, т.к. версия указывается в ссылке на установочный yaml:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+````
+Далее дожидаемся, чтобы все поды Calico перешли в статус 1/1 Ready:
+```bash
+kubectl get pods -n kube-system
+````
+
+После этого проверяем, что мастер и воркер-ноды перешли в статус Ready, это значит, что сеть настроена. Если долго висит NotReady (больше 5 минут), то ВМ лучше перезагрузить:
+```bash
+kubectl get nodes
+````
+
+На этом настройка Kubernetes-кластера завершена.
+
+
 
 
