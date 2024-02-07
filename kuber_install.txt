@@ -7,12 +7,10 @@ sudo systemctl disable firewalld
 //Set SELinux to disabled:
 sudo vim /etc/sysconfig/selinux
 
-
-
 //Set hostnames and /etc/hosts
 sudo vim /etc/hosts
 
-//Example from master node:
+//Example from my master node:
 127.0.0.1   master.zamunda.local        master
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 172.27.64.210 kuber-node1.zamunda.local kuber-node1
@@ -85,6 +83,10 @@ sudo kubeadm init --control-plane-endpoint=master.zamunda.local
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+//Create cluster by adding nodes one by one to master. Take the string from console
+sudo kubeadm join <master_ip_address>:6443 --token
+
 
 kubectl cluster-info
 kubectl get nodes
