@@ -69,14 +69,3 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/
 kubectl get pods -n kube-system
 kubectl get nodes
 
-
-//Testing the cluster
-kubectl create deployment nginx-app --image=nginx --replicas=2
-
-kubectl get deployment nginx-app
-
-kubectl expose deployment nginx-app --type=NodePort --port=80
-kubectl get svc nginx-app
-kubectl describe svc nginx-app
-
-curl http://192.168.1.174:31246
