@@ -1,0 +1,82 @@
+swapoff -a
+sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+//Load kernel modules
+tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+
+modprobe overlay
+modprobe br_netfilter
+
+// Set kernel parameters
+tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF 
+
+//reload above changes
+sysctl --system
+
+
+//install containerd
+apt install -y curl gnupg2 software-properties-common apt-transport-https ca-certificates
+
+
+// enable docker repos
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/docker.gpg
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+//install containerd
+apt update
+apt install -y containerd.io
+
+//Configure containerd so that it starts using systemd as cgroup.
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+//restart and enable containerd
+systemctl restart containerd
+systemctl enable containerd
+
+//add kubernetes apt repositories
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/kubernetes-xenial.gpg
+apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+//install kubernetes components
+
+apt update
+apt install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+
+//Initialize Kubernetes cluster with Kubeadm command
+kubeadm init --control-plane-endpoint=k8smaster.dosvak.org
+
+
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl cluster-info
+kubectl get nodes
+
+//As we can see nodes status is ‘NotReady’, so to make it active. We must install CNI (Container Network Interface) or network add-on plugins like Calico, Flannel and Weave-net.
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+
+kubectl get pods -n kube-system
+kubectl get nodes
+
+
+//Testing the cluster
+kubectl create deployment nginx-app --image=nginx --replicas=2
+
+kubectl get deployment nginx-app
+
+kubectl expose deployment nginx-app --type=NodePort --port=80
+kubectl get svc nginx-app
+kubectl describe svc nginx-app
+
+curl http://192.168.1.174:31246
