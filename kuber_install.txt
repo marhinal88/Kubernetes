@@ -76,7 +76,7 @@ sudo yum update
 sudo yum -y install -y kubelet kubeadm kubectl
 
 //Initialize Kubernetes cluster with Kubeadm command
-//Use your full FQDN name of master node
+//Use your full FQDN of master node
 sudo kubeadm init --control-plane-endpoint=master.zamunda.local
 
 
