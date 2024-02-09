@@ -16,6 +16,7 @@
 ```bash
 sudo swapoff -a
 ```
+В fstab комментим строчку со свапом. Также можно не подключать swap на моменте установки
 ```bash
 sudo vim /etc/fstab
 ```
