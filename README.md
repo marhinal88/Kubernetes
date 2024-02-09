@@ -119,7 +119,7 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
-````
+```
 
 Устанавливаем компоненты кубернетеса:
 ```bash
@@ -133,7 +133,7 @@ sudo yum -y install -y kubelet kubeadm kubectl
 Инициализируем мастер, указываем полный хостнейм с доменом:
 ```bash
 sudo kubeadm init --control-plane-endpoint=master.zamunda.local
-````
+```
 
 После успешной инициализации мастера создаем файл настроек:
 ```bash
@@ -144,14 +144,19 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 ```
 ```bash
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
-````
+```
 ### Эти действия выполняем на трех нодах по очереди:
 
 Выполняем подключение ноды к мастеру. Используем команду и токен, полученные ранее в выводе информации после инициализации мастера:
 
 ```bash
 sudo kubeadm join <master_ip_address>:6443 --token
-````
+```
+У меня это выглядело вот так:
+```bash
+sudo kubeadm join master.zamunda.local:6443 --token h0j93s.x74kkn53hm7gi8iu \
+        --discovery-token-ca-cert-hash sha256:80bacec685810760acba387becfc257273bba98588cbf2f68b6ca396e4e3fc19
+```
 
 ### Далее выполняем все на мастере:
 Проверяем, все ли ноды подключились, на данном этапе у всех будет статус NotReady, это нормально, т.к. не настроен CNI:
