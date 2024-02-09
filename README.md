@@ -150,7 +150,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 Выполняем подключение ноды к мастеру. Используем команду и токен, полученные ранее в выводе информации после инициализации мастера:
 
 ```bash
-sudo kubeadm join <master_ip_address>:6443 --token
+sudo kubeadm join <master_fqdn>:6443 --token
 ```
 У меня это выглядело вот так:
 ```bash
