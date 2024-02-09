@@ -128,6 +128,13 @@ sudo yum update
 ```bash
 sudo yum -y install -y kubelet kubeadm kubectl
 ```
+Включаем сервис kubelet:
+```bash
+sudo systemctl enable kubelet.service
+```
+```bash
+sudo systemctl start kubelet.service
+```
 
 ### Эти действия выполняются на мастере:
 Инициализируем мастер, указываем полный хостнейм с доменом:
