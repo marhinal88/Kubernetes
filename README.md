@@ -15,8 +15,14 @@
 
 ```bash
 sudo swapoff -a
+```
+```bash
 sudo vim /etc/fstab
+```
+```bash
 sudo systemctl stop firewalld
+```
+```bash
 sudo systemctl disable firewalld
 ```
 
@@ -43,7 +49,7 @@ sudo vim /etc/hosts
 Настраиваем resolv.conf:
 ```bash
 sudo vim /etc/resolv/conf
-````
+```
 Пример моего resolv.conf. Указан ip-адрес внутреннего DNS, обязательно прописываем на нем полные хостнеймы ВМ с указанием локального домена
 ```bash
 search zamunda.local
@@ -57,8 +63,11 @@ sudo tee /etc/modules-load.d/containerd.conf <<EOF
 overlay
 br_netfilter
 EOF
-
+```
+```bash
 sudo modprobe overlay
+```
+```bash
 sudo modprobe br_netfilter
 ```
 
@@ -69,23 +78,33 @@ net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
 EOF 
-
+```
+```bash
 sudo sysctl --system
 ```
 
 Добавляем репозитории и устанавливаем containerd:
 ```bash
 sudo yum install -y yum-utils
+```
+```bash
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+```
+```bash
 sudo yum install -y containerd.io
-````
+```
 
 Настраиваем containerd:
 ```bash
 sudo mkdir -p /etc/containerd
+```
+```bash
 sudo containerd config default | sudo tee /etc/containerd/config.toml
+```
+```bash
 sudo sed -i 's/            SystemdCgroup = false/            SystemdCgroup = true/' /etc/containerd/config.toml
-
+```
+```bash
 sudo systemctl restart containerd
 ```
 Добавляем репозитории кубернетеса:
@@ -104,8 +123,10 @@ EOF
 Устанавливаем компоненты кубернетеса:
 ```bash
 sudo yum update
+```
+```bash
 sudo yum -y install -y kubelet kubeadm kubectl
-````
+```
 
 ### Эти действия выполняются на мастере:
 Инициализируем мастер, указываем полный хостнейм с доменом:
@@ -116,7 +137,11 @@ sudo kubeadm init --control-plane-endpoint=master.zamunda.local
 После успешной инициализации мастера создаем файл настроек:
 ```bash
 mkdir -p $HOME/.kube
+```
+```bash
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+```
+```bash
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ````
 ### Эти действия выполняем на трех нодах по очереди:
@@ -131,20 +156,20 @@ sudo kubeadm join <master_ip_address>:6443 --token
 Проверяем, все ли ноды подключились, на данном этапе у всех будет статус NotReady, это нормально, т.к. не настроен CNI:
 ```bash
 kubectl get nodes
-````
+```
 Устанавливаем CNI, мы используем Calico, на данный момент актуальная версия 3.27, перед установкой лучше свериться с репозиторием, т.к. версия указывается в ссылке на установочный yaml:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
-````
+```
 Далее дожидаемся, чтобы все поды Calico перешли в статус 1/1 Ready:
 ```bash
 kubectl get pods -n kube-system
-````
+```
 
 После этого проверяем, что мастер и воркер-ноды перешли в статус Ready, это значит, что сеть настроена. Если долго висит NotReady (больше 5 минут), то ВМ лучше перезагрузить:
 ```bash
 kubectl get nodes
-````
+```
 
 На этом настройка Kubernetes-кластера завершена.
 
