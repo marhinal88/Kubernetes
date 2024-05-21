@@ -115,13 +115,14 @@ sudo systemctl start containerd
 Создаем конфиг репозитория кубернетеса, добавляем данные репозитория, данные могут меняться, свежие выложены https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management:
 
 ```bash
-sudo cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.29/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 ```
 
@@ -130,7 +131,7 @@ EOF
 sudo yum update
 ```
 ```bash
-sudo yum -y install -y kubelet kubeadm kubectl
+sudo yum -y install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 ```
 Включаем сервис kubelet:
 ```bash
@@ -143,6 +144,8 @@ sudo systemctl start kubelet.service
 ### Эти действия выполняются на мастере:
 Инициализируем мастер, указываем полный хостнейм с доменом:
 ```bash
+sudo kubeadm config images pull
+
 sudo kubeadm init --control-plane-endpoint=master.zamunda.local
 ```
 
