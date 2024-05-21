@@ -108,19 +108,24 @@ sudo containerd config default | sudo tee /etc/containerd/config.toml
 sudo sed -i 's/            SystemdCgroup = false/            SystemdCgroup = true/' /etc/containerd/config.toml
 ```
 ```bash
-sudo systemctl restart containerd
+sudo systemctl enable containerd
+
+sudo systemctl start containerd
 ```
-Добавляем репозитории кубернетеса:
+Создаем конфиг репозитория кубернетеса:
 ```bash
-sudo cat > tee /etc/yum.repos.d/kubernetes.repo << EOF
+sudo vim /etc/yum.repos.d/kubernetes.repo
+```
+
+Добавляем данные репозитория, данные могут меняться, свежие выложены https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management:
+
+```bash
 [kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
 enabled=1
 gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
 ```
 
 Устанавливаем компоненты кубернетеса:
