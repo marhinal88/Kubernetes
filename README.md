@@ -112,20 +112,17 @@ sudo systemctl enable containerd
 
 sudo systemctl start containerd
 ```
-Создаем конфиг репозитория кубернетеса:
-```bash
-sudo vim /etc/yum.repos.d/kubernetes.repo
-```
-
-Добавляем данные репозитория, данные могут меняться, свежие выложены https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management:
+Создаем конфиг репозитория кубернетеса, добавляем данные репозитория, данные могут меняться, свежие выложены https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management:
 
 ```bash
+sudo cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
 enabled=1
 gpgcheck=1
 gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+EOF
 ```
 
 Устанавливаем компоненты кубернетеса:
